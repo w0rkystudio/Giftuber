@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Giftuber",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "YouTube yorumlarına GIF ekle ve yorumlardaki GIF bağlantılarını direkt GIF olarak gör.",
   "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },
   "permissions": ["storage"],

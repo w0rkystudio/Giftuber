@@ -125,6 +125,18 @@ html[dark] .gt-btn {
   vertical-align: bottom !important;
 }
 
+/* GIF'li yorumları "Devamını oku" ile kırpma */
+ytd-expander:has(.gt-has-gif) #content,
+ytd-expander:has(.gt-has-gif) #content-text {
+  max-height: none !important;
+  -webkit-line-clamp: unset !important;
+  overflow: visible !important;
+}
+ytd-expander:has(.gt-has-gif) #more,
+ytd-expander:has(.gt-has-gif) #less {
+  display: none !important;
+}
+
 .gt-gif {
   display: block;
   max-width: min(260px, 100%);

@@ -3,14 +3,21 @@
 
   const COLS = 3;
 
-  // Tenor medya kimliği = 11 karakter çekirdek + "AAAA" + biçim harfi (M = tinygif)
-  const tenorSrc = (id) => `https://media.tenor.com/${id.length === 11 ? id + "AAAAM" : id}/tenor.gif`;
+  // Tenor medya kimliği = 11 karakter çekirdek + "AAAA" + biçim harfi (M = tinygif).
+  // Kodda "_" ve "-" yerine "." ve "~" kullanılır: YouTube _italik_ ve -üstü çizili-
+  // biçimlendirmesinde bu karakterleri siliyor, yanına yazı eklenince kod bozuluyordu.
+  const encodeId = (id) => id.replace(/_/g, ".").replace(/-/g, "~");
+  const decodeId = (code) => code.replace(/\./g, "_").replace(/~/g, "-");
+  const tenorSrc = (code) => {
+    const id = decodeId(code);
+    return `https://media.tenor.com/${id.length === 11 ? id + "AAAAM" : id}/tenor.gif`;
+  };
 
   // Yorumlarda tanınan GIF kodları/bağlantıları -> gösterilecek GIF adresi
   const MATCHERS = [
     {
-      // Giftuber kodu: [gif:X3bBf_OHMMw]
-      re: /\[gif:([A-Za-z0-9_-]{8,24})\]/,
+      // Giftuber kodu: [gif:X3bBf.OHMMw] (1.0.0'daki [gif:X3bBf_OHMMw] de okunur)
+      re: /\[gif:([A-Za-z0-9_.~-]{8,24})\]/,
       src: tenorSrc,
     },
     {
@@ -31,7 +38,7 @@
     const m = MATCHERS[1].re.exec(url);
     if (!m) return url;
     const core = /^([A-Za-z0-9_-]{11})AAAA[A-Za-z]$/.exec(m[1]);
-    return `[gif:${core ? core[1] : m[1]}]`;
+    return `[gif:${encodeId(core ? core[1] : m[1])}]`;
   }
 
   const el = (tag, cls, props) => {
@@ -277,23 +284,33 @@
       changed = true;
     }
 
+    // Yorumun tüm metninde ara: YouTube metni birden fazla <span>'e bölebiliyor
+    // (biçimlendirme, bağlantı, hashtag), kod tek bir metin düğümünde olmayabilir.
+    const texts = [];
+    let full = "";
     const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
-    const hits = [];
     for (let t; (t = walker.nextNode()); ) {
-      ANY_RE.lastIndex = 0;
-      if (ANY_RE.test(t.nodeValue)) hits.push(t);
+      texts.push({ t, start: full.length });
+      full += t.nodeValue;
     }
-    for (const t of hits) {
-      const frag = document.createDocumentFragment();
-      let last = 0;
-      const s = t.nodeValue;
-      for (const m of s.matchAll(ANY_RE)) {
-        if (m.index > last) frag.append(s.slice(last, m.index));
-        frag.append(gifImg(gifSrc(m[0])));
-        last = m.index + m[0].length;
+    const locate = (pos, isEnd) => {
+      for (let i = texts.length - 1; i >= 0; i--) {
+        const { t, start } = texts[i];
+        if (isEnd ? start < pos : start <= pos) return [t, Math.min(pos - start, t.nodeValue.length)];
       }
-      if (last < s.length) frag.append(s.slice(last));
-      t.replaceWith(frag);
+      return null;
+    };
+    // Sondan başa: öndeki eşleşmelerin konumları bozulmasın
+    for (const m of [...full.matchAll(ANY_RE)].reverse()) {
+      const src = gifSrc(m[0]);
+      const a = locate(m.index, false);
+      const b = locate(m.index + m[0].length, true);
+      if (!src || !a || !b) continue;
+      const range = document.createRange();
+      range.setStart(a[0], a[1]);
+      range.setEnd(b[0], b[1]);
+      range.deleteContents();
+      range.insertNode(gifImg(src));
       changed = true;
     }
 
