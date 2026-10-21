@@ -28,7 +28,7 @@ There is no way for an extension to change what people *without* it see, so shar
 
 Giftuber isn't on the Chrome Web Store yet, so you install it manually. It takes about a minute.
 
-1. Go to the [**Releases**](https://github.com/tabprogames7-cell/Giftuber/releases/latest) page and download the latest **`Giftuber-*.zip`**.
+1. Go to the [**Releases**](https://github.com/w0rkystudio/Giftuber/releases/latest) page and download the latest **`Giftuber-*.zip`**.
 2. Unzip it to a folder you'll keep (for example `Documents\Giftuber`). Don't delete this folder, because Chrome loads the extension from it.
 3. Open `chrome://extensions` in Chrome.
 4. Turn on **Developer mode** (top-right toggle).
