@@ -44,7 +44,16 @@
   const el = (tag, cls, props) => {
     const n = document.createElement(tag);
     if (cls) n.className = cls;
-    if (props) Object.assign(n, props);
+    // Tek tek ata: bir özellik atanamazsa (salt-okunur, Trusted Types vb.) tüm akış çökmesin
+    for (const [k, v] of Object.entries(props || {})) {
+      try {
+        n[k] = v;
+      } catch {
+        try {
+          n.setAttribute(k, v);
+        } catch {}
+      }
+    }
     return n;
   };
 
@@ -171,7 +180,11 @@
     const needSpace = ed.textContent && !/\s$/.test(ed.textContent);
     const html = (needSpace ? " " : "") + img.outerHTML + " ";
     // execCommand YouTube'un input dinleyicilerini tetikler (Yorum yap butonu aktifleşir)
-    if (!document.execCommand("insertHTML", false, html)) {
+    let inserted = false;
+    try {
+      inserted = document.execCommand("insertHTML", false, html);
+    } catch {} // Trusted Types insertHTML'i engelleyebilir
+    if (!inserted) {
       if (needSpace) range.insertNode(document.createTextNode(" "));
       range.collapse(false);
       range.insertNode(img);
